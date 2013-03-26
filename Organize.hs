@@ -2,7 +2,7 @@ import qualified Sound.TagLib as TagLib
 import System.Environment (getArgs)
 import System.Directory (canonicalizePath, getDirectoryContents, doesDirectoryExist, doesFileExist, createDirectoryIfMissing, copyFile)
 import System.FilePath (combine, takeExtension, addExtension, joinPath, takeDirectory)
-import Control.Monad (filterM, mfilter)
+import Control.Monad (filterM, mfilter, when)
 
 data Tag = Tag {
   file :: String,
@@ -30,12 +30,10 @@ doCopy src dest = do
   
 
 processFile :: FilePath -> FilePath -> IO ()
-processFile dest file = do
-  if takeExtension file == ".mp3" then do
-    tag <- extractTag file
-    let target = combine dest $ tagPath tag
-    doCopy file target
-    else return ()
+processFile dest file = when (takeExtension file == ".mp3") $
+                        do tag <- extractTag file
+                           let target = combine dest $ tagPath tag
+                           doCopy file target
 
 processDirectory :: FilePath -> FilePath -> IO ()
 processDirectory dest path = do
@@ -47,7 +45,7 @@ processDirectory dest path = do
   mapM_ (processFile dest) files
   
 tagPath :: Tag -> FilePath
-tagPath tag = let trackTitle = show (track tag) ++ " - " ++ (title tag) 
+tagPath tag = let trackTitle = show (track tag) ++ " - " ++ title tag 
                   name = addExtension trackTitle "mp3"
                   in
                joinPath [artist tag, album tag, name]
@@ -56,14 +54,13 @@ extractTag :: String -> IO Tag
 extractTag filename = do
   tagFile <- TagLib.open filename
   tempTag <- extractTagFile filename tagFile
-  tag <- constructTag filename tempTag
-  return tag
+  constructTag filename tempTag
   
-extractTagFile :: String -> (Maybe TagLib.TagFile) -> IO (Maybe TagLib.Tag)
+extractTagFile :: String -> Maybe TagLib.TagFile -> IO (Maybe TagLib.Tag)
 extractTagFile _ (Just file) = TagLib.tag file
 extractTagFile filename Nothing = error ("Unable to open file: " ++ filename)
 
-constructTag :: String -> (Maybe TagLib.Tag) -> IO Tag
+constructTag :: String -> Maybe TagLib.Tag -> IO Tag
 constructTag filename Nothing = error ("Unable to open file: " ++ filename)
 constructTag filename (Just tag) = do
   let file = filename

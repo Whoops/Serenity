@@ -1,4 +1,7 @@
 *~
 *.hi
 *.o
+*.sqlite
+*.db
 cabal-dev/*
+.hsenv/*
