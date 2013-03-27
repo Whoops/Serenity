@@ -11,7 +11,6 @@ Artist
   deriving (Show)
 Album
   name String
-  artist ArtistId
   deriving (Show)
 Track
   file String
