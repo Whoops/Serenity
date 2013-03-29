@@ -8,9 +8,11 @@ import Database.Persist.TH
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 Artist
   name String
+  UniqueArtistName name
   deriving (Show)
 Album
   name String
+  UniqueAlbumName name
   deriving (Show)
 Track
   file String
@@ -21,6 +23,7 @@ Track
   comment String
   track Int
   year Int
+  UniqueFile file
   deriving (Show)
 |]
 
