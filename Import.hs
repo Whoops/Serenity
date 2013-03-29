@@ -20,7 +20,7 @@ main = do
     processDirectory inputDir
   
 processDirectory path = do
-  liftIO dirs >>= mapM_ processDirectory 
+  liftIO dirs >>= mapM_ processDirectory
   liftIO files >>= mapM_ processFile
   return ()
   where rawContents = getDirectoryContents path
