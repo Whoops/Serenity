@@ -2,26 +2,30 @@
 {-# LANGUAGE GADTs, FlexibleContexts #-}
 
 import DB hiding (main)
-import Database.Persist
-import Database.Persist.Sqlite
 import System.Environment (getArgs)
 import System.Directory (canonicalizePath, getDirectoryContents, doesDirectoryExist, doesFileExist)
 import System.FilePath (combine, takeExtension)
 import Control.Monad (filterM, when)
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
+import Data.Acid
+import Data.Aeson
+import qualified Data.ByteString.Lazy.Char8 as B (putStrLn)
 import qualified Sound.TagLib as TagLib
 
 main :: IO ()
 main = do
   args <- getArgs
   inputDir <- canonicalizePath $ head args
-  runSqlite "db.sqlite" $ do
-    processDirectory inputDir
+  database <- openDatabase
+  processDirectory database inputDir
+  (query database GetArtists) >>= B.putStrLn . encode
+  (query database GetAlbums) >>= B.putStrLn . encode
+  (query database GetTracks) >>= B.putStrLn . encode
   
-processDirectory path = do
-  liftIO dirs >>= mapM_ processDirectory
-  liftIO files >>= mapM_ processFile
+processDirectory database path = do
+  dirs >>= mapM_ (processDirectory database)
+  files >>= mapM_ (processFile database)
   return ()
   where rawContents = getDirectoryContents path
         contents = rawContents >>= return . map (combine path) . filter (`notElem` [".", ".."])
@@ -33,38 +37,20 @@ extractTag filename = do tagFile <- TagLib.open filename
                          return $ fromJust tag
 
 --processFile :: FilePath -> IO ()
-processFile path = when (takeExtension path == ".mp3") $
-                   do liftIO $ putStrLn path 
-                      liftIO tag >>= insertFile path
-                      return ()
-                   where tag = extractTag path
+processFile database path = when (takeExtension path == ".mp3") $ do
+                            putStrLn path 
+                            tag <- extractTag path
+                            insertFile database path tag
+                            return ()
 
 --insertFile :: FilePath -> TagLib.Tag -> IO ()
-insertFile file tag = do
-  artistId <-  liftIO artistName >>= getOrCreateArtist
-  albumId <- liftIO albumName >>= getOrCreateAlbum
-  (liftIO $ createTrack file artistId albumId tag) >>= insert
-  return ()
-  where artistName = TagLib.artist tag
-        albumName = TagLib.album tag
-        
-createTrack file artist album tag = do
+insertFile database file tag = do
+  artist <- TagLib.artist tag
+  album <- TagLib.album tag
   title <- TagLib.title tag
   genre <- TagLib.genre tag
   comment <- TagLib.comment tag
   track <- TagLib.track tag
   year <- TagLib.year tag
-  return $ Track file title artist album genre comment (fromIntegral track) (fromIntegral year)
-
---getOrCreateArtist :: String -> IO ArtistId
-getOrCreateArtist name = do
-  maybeArtist <- selectFirst [ArtistName ==. name] []
-  case maybeArtist of
-    Just artist -> return $ entityKey artist
-    Nothing -> insert $ Artist name
-
-getOrCreateAlbum name = do
-  maybeAlbum <- selectFirst [AlbumName ==. name] []
-  case maybeAlbum of
-    Just album -> return $ entityKey album
-    Nothing -> insert $ Album name
+  update database (AddTrack file artist album title genre comment track year)
+  return ()
