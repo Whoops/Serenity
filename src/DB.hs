@@ -1,4 +1,5 @@
-{-# LANGUAGE TemplateHaskell, TypeFamilies, DeriveDataTypeable, GeneralizedNewtypeDeriving, RecordWildCards, OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DoAndIfThenElse, RecordWildCards, OverloadedStrings #-}
 module DB where
 import Control.Monad.State (get, put)
 import Control.Monad.Reader (ask)
@@ -99,10 +100,9 @@ getOrCreateArtist :: String -> Update Database Artist
 getOrCreateArtist name = do
   db@Database{..} <- get
   let art = artists @= (ArtistName name)
-  if Data.IxSet.null art then
-    addArtist name
-  else
-    return $ fromJust $ getOne art
+  if Data.IxSet.null art
+    then addArtist name
+    else return $ fromJust $ getOne art
   
 addAlbum :: String ->  Update Database Album
 addAlbum name = do
@@ -160,10 +160,5 @@ $(makeAcidic ''Database ['addArtist,
                          'getArtists,
                          'getAlbums,
                          'getTracks])
-
-main :: IO()
-main = do
-       database <- openDatabase
-       return ()
        
 openDatabase = openLocalStateFrom "db/" (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)

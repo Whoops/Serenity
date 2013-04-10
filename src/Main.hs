@@ -1,19 +1,23 @@
 {-#Language OverloadedStrings #-}
-import DB hiding (main)
+import DB
+import Import
 import Web.Scotty
---import Database.Persist
---import Database.Persist.Sqlite
 import Data.Aeson hiding (json)
---import Control.Monad.IO.Class (liftIO)
+import Data.Acid
+import System.Environment (getArgs)
+import System.Directory (canonicalizePath)
+import qualified Data.ByteString.Lazy.Char8 as B (putStrLn)
 
-artists = Artist "John Doe"
-
-main = scotty 3000 $ do
-  get "/" $ do
-    json artists
-
---main = runSqlite "db.sqlite" $ do 
---  liftIO $ scotty 3000 $ do
---  Web.Scotty.get "/" $ do
---    lift $ selectList [ArtistName !=. "joe"] []
---    text "hello world!"
+main :: IO ()
+main = do
+  args <- getArgs
+  database <- openDatabase
+  inputDir <- canonicalizePath $ head args
+  processDirectory database inputDir
+  (query database GetArtists) >>= B.putStrLn . encode
+  (query database GetAlbums) >>= B.putStrLn . encode
+  (query database GetTracks) >>= B.putStrLn . encode
+  
+--main = scotty 3000 $ do
+--  get "/" $ do
+--    json artists

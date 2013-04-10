@@ -1,8 +1,7 @@
 {-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies, OverloadedStrings #-}
 {-# LANGUAGE GADTs, FlexibleContexts #-}
-
+module Import where
 import DB hiding (main)
-import System.Environment (getArgs)
 import System.Directory (canonicalizePath, getDirectoryContents, doesDirectoryExist, doesFileExist)
 import System.FilePath (combine, takeExtension)
 import Control.Monad (filterM, when)
@@ -10,19 +9,8 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
 import Data.Acid
 import Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as B (putStrLn)
 import qualified Sound.TagLib as TagLib
 
-main :: IO ()
-main = do
-  args <- getArgs
-  inputDir <- canonicalizePath $ head args
-  database <- openDatabase
-  processDirectory database inputDir
-  (query database GetArtists) >>= B.putStrLn . encode
-  (query database GetAlbums) >>= B.putStrLn . encode
-  (query database GetTracks) >>= B.putStrLn . encode
-  
 processDirectory database path = do
   dirs >>= mapM_ (processDirectory database)
   files >>= mapM_ (processFile database)
