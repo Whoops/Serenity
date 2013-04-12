@@ -58,9 +58,9 @@ instance ToJSON AlbumId where
 instance ToJSON TrackId where
   toJSON (TrackId id) = Number $ fromIntegral id
 instance ToJSON Artist where
-  toJSON (Artist id name albums tracks) = object ["id" .= id, "name" .= name, "albums" .= albums, "tracks" .= tracks]
+  toJSON (Artist id name albums tracks) = object ["id" .= id, "name" .= name]
 instance ToJSON Album where
-  toJSON (Album id name tracks) = object ["id" .= id, "name" .= name, "tracks" .= tracks]
+  toJSON (Album id name tracks) = object ["id" .= id, "name" .= name]
 instance ToJSON Track where
   toJSON (Track id _ artist album title genre comment track year) = object ["id" .= id,
                                                                             "artist" .= artist,
