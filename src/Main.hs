@@ -2,6 +2,7 @@
 import DB
 import Import
 import Web.Scotty
+import Network.Wai.Middleware.RequestLogger
 import Data.Aeson hiding (json)
 import Data.Acid
 import Data.FileEmbed
@@ -38,6 +39,7 @@ importDirectory inputDir = do
 runServer = do
   database <- openDatabase
   scotty 3000 $ do
+    middleware logStdoutDev
     get "/" $ html $ getStatic "index.html"
     get "/artists" $ do
       artists <- liftIO $ query database GetArtists
