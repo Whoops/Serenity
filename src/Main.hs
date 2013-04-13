@@ -3,9 +3,9 @@ import DB
 import Import
 import Web.Scotty
 import Network.Wai.Middleware.RequestLogger
+import Network.Wai.Middleware.Static
 import Data.Aeson hiding (json)
 import Data.Acid
-import Data.FileEmbed
 import Data.Text.Lazy.Encoding (decodeUtf8)
 import qualified Data.Text as T
 import System.Directory (canonicalizePath)
@@ -16,6 +16,8 @@ import Data.Maybe (fromJust)
 import qualified Data.ByteString
 import Data.ByteString.Lazy (fromStrict)
 import qualified Data.ByteString.Lazy.Char8 as B (putStrLn)
+
+import Paths_Serenity
 
 data Flag = Import FilePath
             deriving(Show)
@@ -38,15 +40,11 @@ importDirectory inputDir = do
   
 runServer = do
   database <- openDatabase
+  staticDir <- getDataDir
   scotty 3000 $ do
     middleware logStdoutDev
-    get "/" $ html $ getStatic "index.html"
+    middleware $ staticPolicy $ noDots >-> addBase staticDir
+    get "/" $ redirect "index.html"
     get "/artists" $ do
       artists <- liftIO $ query database GetArtists
       json artists
-
-static :: [(FilePath, Data.ByteString.ByteString)]
-static = $(embedDir "src/static")
-
---getStatic :: FilePath -> T.Text
-getStatic path = decodeUtf8 $ fromStrict $ fromJust $ lookup path static
