@@ -1,4 +1,4 @@
-{-#Language OverloadedStrings, TemplateHaskell #-}
+{-#Language OverloadedStrings #-}
 import DB
 import Import
 import Web.Scotty
@@ -23,7 +23,7 @@ data Flag = Import FilePath
             deriving(Show)
 
 options :: [OptDescr Flag]
-options = [ Option ['i'] ["import"] (ReqArg Import "DIR") "directory to import from" ]
+options = [ Option "i" ["import"] (ReqArg Import "DIR") "directory to import from" ]
 
 main :: IO ()
 main = do

@@ -99,7 +99,7 @@ addArtist name = do
 getOrCreateArtist :: String -> Update Database Artist
 getOrCreateArtist name = do
   db@Database{..} <- get
-  let art = artists @= (ArtistName name)
+  let art = artists @= ArtistName name
   if Data.IxSet.null art
     then addArtist name
     else return $ fromJust $ getOne art
@@ -115,7 +115,7 @@ addAlbum name = do
 getOrCreateAlbum :: String -> Update Database Album
 getOrCreateAlbum name = do
   db@Database{..} <- get
-  let alb = albums @= (AlbumName name)
+  let alb = albums @= AlbumName name
   if Data.IxSet.null alb then
     addAlbum name
   else
@@ -149,7 +149,7 @@ getArtistAlbums artistId = do
     return []
   else do
     let artist = fromJust $ getOne arts
-    let albs = albums @+ (Set.toList $ artistAlbums artist) 
+    let albs = albums @+ Set.toList (artistAlbums artist) 
     return $ toList albs
 
 getAlbums :: Query Database [Album]

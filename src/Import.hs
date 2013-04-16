@@ -1,10 +1,10 @@
-{-# LANGUAGE QuasiQuotes, TemplateHaskell, TypeFamilies, OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies, OverloadedStrings #-}
 {-# LANGUAGE GADTs, FlexibleContexts #-}
 module Import where
 import DB hiding (main)
 import System.Directory (canonicalizePath, getDirectoryContents, doesDirectoryExist, doesFileExist)
 import System.FilePath (combine, takeExtension)
-import Control.Monad (filterM, when)
+import Control.Monad (filterM, when, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
 import Data.Acid
@@ -17,7 +17,8 @@ processDirectory database path = do
   files >>= mapM_ (processFile database)
   return ()
   where rawContents = getDirectoryContents path
-        contents = rawContents >>= return . map (combine path) . filter (`notElem` [".", ".."])
+        contents = liftM (map (combine path) . filter (`notElem` [".", ".."])) rawContents
+--        contents = rawContents >>= return . map (combine path) . filter (`notElem` [".", ".."])
         dirs = contents >>= filterM doesDirectoryExist
         files = contents >>= filterM doesFileExist
   
