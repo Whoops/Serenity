@@ -62,14 +62,15 @@ instance ToJSON Artist where
 instance ToJSON Album where
   toJSON (Album id name tracks) = object ["id" .= id, "name" .= name]
 instance ToJSON Track where
-  toJSON (Track id _ artist album title genre comment track year) = object ["id" .= id,
+  toJSON (Track id file artist album title genre comment track year) = object ["id" .= id,
                                                                             "artist" .= artist,
                                                                             "album" .= album,
                                                                             "title" .= title,
                                                                             "genre" .= genre,
                                                                             "comment" .= comment,
                                                                             "track" .= track,
-                                                                            "year" .= year]
+                                                                            "year" .= year, 
+                                                                            "file" .= file]
 
 $(deriveSafeCopy 0 'base ''Album)
 $(deriveSafeCopy 0 'base ''Track)
@@ -152,10 +153,33 @@ getArtistAlbums artistId = do
     let albs = albums @+ Set.toList (artistAlbums artist) 
     return $ toList albs
 
+getArtistTracks :: ArtistId -> Query Database [Track]
+getArtistTracks artistId = do
+  d@Database{..} <- ask
+  let arts = artists @= artistId
+  if Data.IxSet.null arts then
+    return []
+  else do
+    let artist = fromJust $ getOne arts
+    let trs = tracks @+ Set.toList (artistTracks artist)
+    return $ toList trs
+
 getAlbums :: Query Database [Album]
 getAlbums = do
   d@Database{..} <- ask
   return $ toList albums
+  
+getAlbumTracks :: AlbumId -> Query Database [Track]
+getAlbumTracks albumId = do
+  d@Database{..} <- ask
+  let albs = albums @= albumId
+  if Data.IxSet.null albs then
+    return []
+  else do
+    let album = fromJust $ getOne albs
+    let trs = tracks @+ Set.toList (albumTracks album)
+    return $ toList trs
+
 
 getTracks :: Query Database [Track]
 getTracks = do
@@ -170,7 +194,9 @@ $(makeAcidic ''Database ['addArtist,
                          'addTrack,
                          'getArtists,
                          'getArtistAlbums,
+                         'getArtistTracks,
                          'getAlbums,
+                         'getAlbumTracks,
                          'getTracks])
        
 openDatabase = openLocalStateFrom "db/" (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)

@@ -52,3 +52,14 @@ runServer = do
       artistId <- param "artistId"
       albums <- liftIO $ query database (GetArtistAlbums $ ArtistId artistId)
       json albums
+    get "/artists/:artistId/tracks" $ do
+      artistId <- param "artistId"
+      tracks <- liftIO $ query database (GetArtistTracks $ ArtistId artistId)
+      json tracks
+    get "/albums" $ do
+      albums <- liftIO $ query database GetAlbums
+      json albums
+    get "/albums/:albumId/tracks" $ do
+      albumId <- param "albumId"
+      tracks <- liftIO $ query database (GetAlbumTracks $ AlbumId albumId)
+      json tracks
