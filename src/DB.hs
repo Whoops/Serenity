@@ -141,6 +141,17 @@ getArtists = do
   d@Database{..} <- ask
   return $ toList artists
 
+getArtistAlbums :: ArtistId -> Query Database [Album]
+getArtistAlbums artistId = do
+  d@Database{..} <- ask
+  let arts = artists @= artistId
+  if Data.IxSet.null arts then
+    return []
+  else do
+    let artist = fromJust $ getOne arts
+    let albs = albums @+ (Set.toList $ artistAlbums artist) 
+    return $ toList albs
+
 getAlbums :: Query Database [Album]
 getAlbums = do
   d@Database{..} <- ask
@@ -158,6 +169,7 @@ $(makeAcidic ''Database ['addArtist,
                          'getOrCreateAlbum, 
                          'addTrack,
                          'getArtists,
+                         'getArtistAlbums,
                          'getAlbums,
                          'getTracks])
        
