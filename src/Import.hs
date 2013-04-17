@@ -9,8 +9,7 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
 import Data.Acid
 import Data.Aeson
-import Audio.TagLib.TagLib
-import Data.ByteString.Char8 (pack)
+import qualified Sound.TagLib as TL
 
 processDirectory database path = do
   dirs >>= mapM_ (processDirectory database)
@@ -18,29 +17,30 @@ processDirectory database path = do
   return ()
   where rawContents = getDirectoryContents path
         contents = liftM (map (combine path) . filter (`notElem` [".", ".."])) rawContents
---        contents = rawContents >>= return . map (combine path) . filter (`notElem` [".", ".."])
         dirs = contents >>= filterM doesDirectoryExist
         files = contents >>= filterM doesFileExist
   
-extractTag filename = do tagFile <- tagFileOpen $ pack filename
-                         tag <- tagFileGetTag $ fromJust tagFile
+extractTag filename = do tagFile <- TL.open filename
+                         tag <- TL.tag $ fromJust tagFile
                          return $ fromJust tag
 
 --processFile :: FilePath -> IO ()
 processFile database path = when (takeExtension path == ".mp3") $ do
                             putStrLn path 
-                            tag <- extractTag path
-                            insertFile database path tag
+                            insertFile database path
                             return ()
 
 --insertFile :: FilePath -> TagLib.Tag -> IO ()
-insertFile database file tag = do
-  artist <- tagGetArtist tag
-  album <- tagGetAlbum tag
-  title <- tagGetTitle tag
-  genre <- tagGetGenre tag
-  comment <- tagGetComment tag
-  track <- tagGetTrack tag
-  year <- tagGetYear tag
-  update database (AddTrack file artist album title genre comment (toInteger track) (toInteger year))
-  return ()
+insertFile database file = do
+  tagFile <- TL.open file
+  mTag <- TL.tag $ fromJust tagFile
+  let tag = fromJust mTag
+  artist <- TL.artist tag
+  album <- TL.album tag
+  title <- TL.title tag
+  genre <- TL.genre tag
+  comment <- TL.comment tag
+  track <- TL.track tag
+  year <- TL.year tag
+  update database (AddTrack file artist album title genre comment track year)
+  TL.close $ fromJust tagFile
