@@ -63,3 +63,11 @@ runServer = do
       albumId <- param "albumId"
       tracks <- liftIO $ query database (GetAlbumTracks $ AlbumId albumId)
       json tracks
+    get "/tracks/:trackId" $ do
+      trackId <- param "trackId"
+      mTrack <- liftIO $ query database (GetTrack $ TrackId trackId)
+      case mTrack of
+        Just track -> do
+          header "Content-Type" "audio/mpeg"
+          Web.Scotty.file $ DB.file track
+        Nothing -> next

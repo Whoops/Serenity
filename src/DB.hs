@@ -180,11 +180,15 @@ getAlbumTracks albumId = do
     let trs = tracks @+ Set.toList (albumTracks album)
     return $ toList trs
 
-
 getTracks :: Query Database [Track]
 getTracks = do
   d@Database{..} <- ask
   return $ toList tracks
+  
+getTrack :: TrackId -> Query Database (Maybe Track)
+getTrack trackId = do
+  d@Database{..} <- ask
+  return $ getOne $ tracks @= trackId
 
 
 $(makeAcidic ''Database ['addArtist,
@@ -197,6 +201,7 @@ $(makeAcidic ''Database ['addArtist,
                          'getArtistTracks,
                          'getAlbums,
                          'getAlbumTracks,
-                         'getTracks])
+                         'getTracks,
+                         'getTrack])
        
 openDatabase = openLocalStateFrom "db/" (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)
