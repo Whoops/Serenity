@@ -19,18 +19,21 @@ import qualified Data.ByteString.Lazy.Char8 as B (putStrLn)
 
 import Paths_Serenity
 
-data Flag = Import FilePath
+data Flag = Import FilePath |
+            Static FilePath
             deriving(Show)
 
 options :: [OptDescr Flag]
-options = [ Option "i" ["import"] (ReqArg Import "DIR") "directory to import from" ]
+options = [ Option "i" ["import"] (ReqArg Import "DIR") "directory to import from", 
+            Option "s" ["static"] (ReqArg Static "DIR") "serve static files from DIR instead of built-ins" ]
 
 main :: IO ()
 main = do
   args <- getArgs
   case getOpt Permute options args of
     ([Import inputDir], [], []) -> importDirectory inputDir
-    ([], [], []) -> runServer
+    ([Static staticDir], [], []) -> runServer staticDir
+    ([], [], []) -> getDataDir >>= runServer
     (_, _, errors) -> ioError (userError (concat errors ++ usageInfo header options))
   where header = "Usage: Serenity [OPTION...]"
 
@@ -38,9 +41,8 @@ importDirectory inputDir = do
   database <- openDatabase
   canonicalizePath inputDir >>= processDirectory database
   
-runServer = do
+runServer staticDir = do
   database <- openDatabase
-  staticDir <- getDataDir
   scotty 3000 $ do
     middleware logStdoutDev
     middleware $ staticPolicy $ noDots >-> addBase staticDir
@@ -62,6 +64,9 @@ runServer = do
     get "/albums/:albumId/tracks" $ do
       albumId <- param "albumId"
       tracks <- liftIO $ query database (GetAlbumTracks $ AlbumId albumId)
+      json tracks
+    get "/tracks" $ do
+      tracks <- liftIO $ query database GetTracks
       json tracks
     get "/tracks/:trackId" $ do
       trackId <- param "trackId"

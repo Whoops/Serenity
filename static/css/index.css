@@ -1,0 +1,28 @@
+.side {
+    width: 25%;
+    display: block;
+    float: left;
+    height: 85%;
+}
+.main {
+    width: 50%;
+    display: block;
+    float: left;
+    height: 85%;
+    overflow: auto;
+}
+
+.full {
+    width: 100%;
+    float: left;
+}
+
+.bottom {
+    margin-top: .5%;
+    height: 14%;
+}
+
+div.jp-audio {
+    margin-left: auto;
+    margin-right: auto;
+}
