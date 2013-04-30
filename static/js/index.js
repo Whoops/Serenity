@@ -1,7 +1,60 @@
+function AppController($scope) {
+    $scope.mode = "artists"
+    $scope.template = function () {
+        return "views/" + $scope.mode + ".html";
+    }
+
+    $scope.setArtist = function (artist) {
+        $scope.artist = artist;
+        $scope.album = null;
+        $scope.mode = "albums";
+    }
+
+    $scope.setAlbum = function (album) {
+        $scope.album = album;
+        $scope.mode = "tracks";
+    }
+
+    $scope.clickArtists = function () {
+        $scope.artist = null;
+        $scope.album = null;
+        $scope.mode = "artists";
+    };
+    
+    $scope.clickAlbums = function () {
+        $scope.artist = null;
+        $scope.album = null;
+        $scope.mode = "albums";
+    }
+}
+
+function AlbumController($scope, $http) {
+    $scope.albums = [];
+
+    var url = '/albums';
+    if ($scope.artist)
+        url = '/artists/' + $scope.artist.id + '/albums';
+    
+    $http.get(url).success(function (data) {
+        $scope.albums = data.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    });
+}
+
+function ArtistController($scope, $http) {
+    $scope.artists = [];
+    $http.get('/artists').success(function (data) {
+        $scope.artists = data.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    });
+}
+
 function TrackController($scope, $rootScope, $http)
 {
     $scope.tracks = [];
-    $http.get('/tracks').success(function (data) {
+
+    var url = '/tracks';
+    if ($scope.album)
+        url = '/albums/' + $scope.album.id + '/tracks';
+    $http.get(url).success(function (data) {
         $scope.tracks = data;
     });
 
