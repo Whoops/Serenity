@@ -26,3 +26,7 @@ div.jp-audio {
     margin-left: auto;
     margin-right: auto;
 }
+
+.playing {
+    background-color: lightslategrey;
+}
