@@ -26,6 +26,12 @@ function AppController($scope) {
         $scope.album = null;
         $scope.mode = "albums";
     }
+
+    $scope.clickTracks = function () {
+        $scope.artist = null;
+        $scope.album = null;
+        $scope.mode = "tracks";
+    }
 }
 
 function AlbumController($scope, $http) {
@@ -55,7 +61,12 @@ function TrackController($scope, $rootScope, $http)
     if ($scope.album)
         url = '/albums/' + $scope.album.id + '/tracks';
     $http.get(url).success(function (data) {
-        $scope.tracks = data;
+        $scope.tracks = data.sort(function (a, b) {
+            if ($scope.album)
+                return a.track - b.track;
+            else
+                return a.title.localeCompare(b.title);
+        });
     });
 
     $scope.queue = function (track) {
