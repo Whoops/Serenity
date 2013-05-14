@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DoAndIfThenElse, RecordWildCards, OverloadedStrings #-}
-module DB where
+module Serenity.DB where
 import Control.Monad.State (get, put)
 import Control.Monad.Reader (ask)
 import Data.Maybe(fromJust)

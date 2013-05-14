@@ -1,6 +1,6 @@
 {-#Language OverloadedStrings #-}
-import DB
-import Import
+import Serenity.DB as DB
+import Serenity.Import
 import Web.Scotty
 import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.Static

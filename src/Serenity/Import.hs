@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, OverloadedStrings #-}
 {-# LANGUAGE GADTs, FlexibleContexts #-}
-module Import where
-import DB hiding (main)
+module Serenity.Import where
+import Serenity.DB
 import System.Directory (canonicalizePath, getDirectoryContents, doesDirectoryExist, doesFileExist)
 import System.FilePath (combine, takeExtension)
 import Control.Monad (filterM, when, liftM)
