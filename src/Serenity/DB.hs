@@ -3,6 +3,7 @@
 module Serenity.DB where
 import Control.Monad.State (get, put)
 import Control.Monad.Reader (ask)
+import System.FilePath
 import Data.Maybe(fromJust)
 import Data.Aeson
 import Data.SafeCopy
@@ -204,4 +205,4 @@ $(makeAcidic ''Database ['addArtist,
                          'getTracks,
                          'getTrack])
        
-openDatabase = openLocalStateFrom "db/" (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)
+openDatabase dir = openLocalStateFrom (dir </> "db") (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)
