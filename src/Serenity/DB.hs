@@ -4,7 +4,7 @@ module Serenity.DB where
 import Control.Monad.State (get, put)
 import Control.Monad.Reader (ask)
 import System.FilePath
-import Data.Maybe(fromJust)
+import Data.Maybe(fromJust, isJust)
 import Data.Aeson
 import Data.SafeCopy
 import Data.Acid
@@ -24,6 +24,8 @@ newtype TrackId = TrackId { unTrackId :: Integer }
                   deriving(Eq, Ord, Enum, Show, SafeCopy, Typeable)
 newtype TrackTitle = TrackTitle { unTrackTitle :: String }
                      deriving(Eq, Ord, Show, SafeCopy, Typeable)
+newtype TrackFile = TrackFile { unTrackFile :: FilePath }
+                    deriving(Eq, Ord, Show, SafeCopy, Typeable)
 
 data Database = Database { nextArtist :: ArtistId,
                            nextAlbum :: AlbumId,
@@ -86,6 +88,7 @@ instance Indexable Album where
                   ixFun $ \alb -> [AlbumName $ albumName alb] ]
 instance Indexable Track where
   empty = ixSet [ ixFun $ \track -> [trackId track],
+                  ixFun $ \track -> [TrackFile $ file track],
                   ixFun $ \track -> [artist track],
                   ixFun $ \track -> [album track], 
                   ixFun $ \track -> [TrackTitle $ title track] ]
@@ -191,6 +194,11 @@ getTrack trackId = do
   d@Database{..} <- ask
   return $ getOne $ tracks @= trackId
 
+hasFile :: FilePath -> Query Database (Bool)
+hasFile file = do
+  d@Database{..} <- ask
+  return $ isJust $ getOne $ tracks @= TrackFile file
+
 
 $(makeAcidic ''Database ['addArtist,
                          'getOrCreateArtist,
@@ -203,6 +211,7 @@ $(makeAcidic ''Database ['addArtist,
                          'getAlbums,
                          'getAlbumTracks,
                          'getTracks,
-                         'getTrack])
+                         'getTrack,
+                         'hasFile])
        
 openDatabase dir = openLocalStateFrom (dir </> "db") (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)

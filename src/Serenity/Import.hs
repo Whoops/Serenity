@@ -11,6 +11,7 @@ import Data.Acid
 import Data.Aeson
 import qualified Sound.TagLib as TL
 
+processDirectory :: AcidState Database -> FilePath -> IO ()
 processDirectory database path = do
   dirs >>= mapM_ (processDirectory database)
   files >>= mapM_ (processFile database)
@@ -19,18 +20,18 @@ processDirectory database path = do
         contents = liftM (map (combine path) . filter (`notElem` [".", ".."])) rawContents
         dirs = contents >>= filterM doesDirectoryExist
         files = contents >>= filterM doesFileExist
-  
+
+extractTag :: FilePath -> IO TL.Tag
 extractTag filename = do tagFile <- TL.open filename
                          tag <- TL.tag $ fromJust tagFile
                          return $ fromJust tag
 
---processFile :: FilePath -> IO ()
+processFile :: AcidState Database -> FilePath -> IO ()
 processFile database path = when (takeExtension path == ".mp3") $ do
                             putStrLn path 
                             insertFile database path
-                            return ()
-
---insertFile :: FilePath -> TagLib.Tag -> IO ()
+                            
+insertFile :: AcidState Database -> FilePath -> IO ()
 insertFile database file = do
   tagFile <- TL.open file
   mTag <- TL.tag $ fromJust tagFile
