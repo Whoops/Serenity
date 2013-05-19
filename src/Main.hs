@@ -74,7 +74,9 @@ extractStatics dir = mapM_ extractFile statics
 
 importDirectory workDir (Import inputDir) = do
   database <- openDatabase workDir
-  canonicalizePath inputDir >>= processDirectory database
+  (new, old) <- canonicalizePath inputDir >>= processDirectory database
+  putStrLn $ "Imported " ++ show new ++ " files"
+  putStrLn $ "Ignored " ++ show old ++ " already imported files"
   closeAcidState database
   
 runServer workDir = do

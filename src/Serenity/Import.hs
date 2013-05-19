@@ -6,15 +6,19 @@ import System.Directory (canonicalizePath, getDirectoryContents, doesDirectoryEx
 import System.FilePath (combine, takeExtension)
 import Control.Monad (filterM, when, liftM)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.State
 import Data.Maybe (fromJust)
 import Data.Acid
 import Data.Aeson
 import qualified Sound.TagLib as TL
 
-processDirectory :: AcidState Database -> FilePath -> IO ()
-processDirectory database path = do
-  dirs >>= mapM_ (processDirectory database)
-  files >>= mapM_ (processFile database)
+processDirectory :: AcidState Database -> FilePath -> IO (Integer, Integer)
+processDirectory database path = runStateT (doDirectory database path) (0, 0) >>= return . snd
+
+doDirectory :: AcidState Database -> FilePath -> StateT (Integer, Integer) IO ()
+doDirectory database path = do
+  liftIO dirs >>= mapM_ (doDirectory database)
+  liftIO files >>= mapM_ (processFile database)
   return ()
   where rawContents = getDirectoryContents path
         contents = liftM (map (combine path) . filter (`notElem` [".", ".."])) rawContents
@@ -26,10 +30,16 @@ extractTag filename = do tagFile <- TL.open filename
                          tag <- TL.tag $ fromJust tagFile
                          return $ fromJust tag
 
-processFile :: AcidState Database -> FilePath -> IO ()
+processFile :: AcidState Database -> FilePath -> StateT (Integer, Integer) IO ()
 processFile database path = when (takeExtension path == ".mp3") $ do
-                            putStrLn path 
-                            insertFile database path
+  (new, old) <- get
+  has <- liftIO $ query database (HasFile path)
+  if has
+     then put (new, old + 1)
+    else do
+    liftIO $ putStrLn path 
+    liftIO $ insertFile database path
+    put (new + 1, old)
                             
 insertFile :: AcidState Database -> FilePath -> IO ()
 insertFile database file = do
