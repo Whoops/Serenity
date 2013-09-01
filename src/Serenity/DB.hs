@@ -10,19 +10,20 @@ import Data.SafeCopy
 import Data.Acid
 import Data.Typeable
 import Data.IxSet
+import Data.Text
 import qualified Data.Set as Set
 
 newtype ArtistId = ArtistId { unArtistId :: Integer }
                    deriving(Eq, Ord, Enum, Show, SafeCopy, Typeable)
-newtype ArtistName = ArtistName { unArtistName :: String }
+newtype ArtistName = ArtistName { unArtistName :: Text }
                      deriving(Eq, Ord, Show, SafeCopy, Typeable)
 newtype AlbumId = AlbumId { unAlbumId :: Integer }                            
                   deriving(Eq, Ord, Enum, Show, SafeCopy, Typeable)
-newtype AlbumName = AlbumName {unAlbumName :: String }
+newtype AlbumName = AlbumName {unAlbumName :: Text }
                     deriving(Eq, Ord, Show, SafeCopy, Typeable)
 newtype TrackId = TrackId { unTrackId :: Integer }
                   deriving(Eq, Ord, Enum, Show, SafeCopy, Typeable)
-newtype TrackTitle = TrackTitle { unTrackTitle :: String }
+newtype TrackTitle = TrackTitle { unTrackTitle :: Text }
                      deriving(Eq, Ord, Show, SafeCopy, Typeable)
 newtype TrackFile = TrackFile { unTrackFile :: FilePath }
                     deriving(Eq, Ord, Show, SafeCopy, Typeable)
@@ -35,23 +36,23 @@ data Database = Database { nextArtist :: ArtistId,
                            tracks :: IxSet Track }
                 deriving (Show, Typeable)
 data Artist = Artist { artistId :: ArtistId,
-                       artistName :: String, 
+                       artistName :: Text, 
                        artistAlbums :: Set.Set AlbumId,
                        artistTracks :: Set.Set TrackId }
             deriving (Eq, Ord, Show, Typeable)
 data Album = Album { albumId :: AlbumId,
-                     albumName :: String, 
+                     albumName :: Text, 
                      albumTracks :: Set.Set TrackId }
            deriving (Eq, Ord, Show, Typeable)
 data Track = Track { trackId :: TrackId,
                      file :: FilePath,
                      artist :: ArtistId,
                      album :: AlbumId,
-                     title :: String,
-                     genre :: String,
-                     comment :: String,
-                     track :: Integer,
-                     year :: Integer }
+                     title :: Text,
+                     genre :: Text,
+                     comment :: Text,
+                     track :: Int,
+                     year :: Int }
            deriving (Eq, Ord, Show, Typeable)         
                     
 instance ToJSON ArtistId where
@@ -93,7 +94,7 @@ instance Indexable Track where
                   ixFun $ \track -> [album track], 
                   ixFun $ \track -> [TrackTitle $ title track] ]
   
-addArtist :: String ->  Update Database Artist
+addArtist :: Text ->  Update Database Artist
 addArtist name = do
   db@Database{..} <- get
   let art = Artist nextArtist name Set.empty Set.empty
@@ -101,7 +102,7 @@ addArtist name = do
              artists = insert art artists }
   return art
 
-getOrCreateArtist :: String -> Update Database Artist
+getOrCreateArtist :: Text -> Update Database Artist
 getOrCreateArtist name = do
   db@Database{..} <- get
   let art = artists @= ArtistName name
@@ -109,7 +110,7 @@ getOrCreateArtist name = do
     then addArtist name
     else return $ fromJust $ getOne art
   
-addAlbum :: String ->  Update Database Album
+addAlbum :: Text ->  Update Database Album
 addAlbum name = do
   db@Database{..} <- get
   let alb = Album nextAlbum name Set.empty
@@ -117,7 +118,7 @@ addAlbum name = do
              albums = insert alb albums }
   return alb
 
-getOrCreateAlbum :: String -> Update Database Album
+getOrCreateAlbum :: Text -> Update Database Album
 getOrCreateAlbum name = do
   db@Database{..} <- get
   let alb = albums @= AlbumName name
@@ -126,7 +127,7 @@ getOrCreateAlbum name = do
   else
     return $ fromJust $ getOne alb
          
-addTrack :: FilePath -> String -> String -> String -> String -> String -> Integer -> Integer -> Update Database Track
+addTrack :: FilePath -> Text -> Text -> Text -> Text -> Text -> Int -> Int -> Update Database Track
 addTrack file artist album title genre comment track year = do
   alb <- getOrCreateAlbum album 
   art <- getOrCreateArtist artist
@@ -214,4 +215,4 @@ $(makeAcidic ''Database ['addArtist,
                          'getTrack,
                          'hasFile])
        
-openDatabase dir = openLocalStateFrom (dir </> "db") (Database (ArtistId 1) (AlbumId 1) (TrackId 1) empty empty empty)
+openDatabase dir = openLocalStateFrom (dir </> "db") (Database (ArtistId 1) (AlbumId 1) (TrackId 1) Data.IxSet.empty Data.IxSet.empty Data.IxSet.empty)

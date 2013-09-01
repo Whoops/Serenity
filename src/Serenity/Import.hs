@@ -10,7 +10,8 @@ import Control.Monad.State
 import Data.Maybe (fromJust)
 import Data.Acid
 import Data.Aeson
-import qualified Sound.TagLib as TL
+import Audio.TagLib as TL
+--import qualified Sound.TagLib as TL
 
 processDirectory :: AcidState Database -> FilePath -> IO (Integer, Integer)
 processDirectory database path = runStateT (doDirectory database path) (0, 0) >>= return . snd
@@ -25,10 +26,10 @@ doDirectory database path = do
         dirs = contents >>= filterM doesDirectoryExist
         files = contents >>= filterM doesFileExist
 
-extractTag :: FilePath -> IO TL.Tag
-extractTag filename = do tagFile <- TL.open filename
-                         tag <- TL.tag $ fromJust tagFile
-                         return $ fromJust tag
+--extractTag :: FilePath -> IO TL.Tag
+--extractTag filename = do tagFile <- TL.open filename
+--                         tag <- TL.tag $ fromJust tagFile
+--                         return $ fromJust tag
 
 processFile :: AcidState Database -> FilePath -> StateT (Integer, Integer) IO ()
 processFile database path = when (takeExtension path == ".mp3") $ do
@@ -43,15 +44,27 @@ processFile database path = when (takeExtension path == ".mp3") $ do
                             
 insertFile :: AcidState Database -> FilePath -> IO ()
 insertFile database file = do
-  tagFile <- TL.open file
-  mTag <- TL.tag $ fromJust tagFile
-  let tag = fromJust mTag
-  artist <- TL.artist tag
-  album <- TL.album tag
-  title <- TL.title tag
-  genre <- TL.genre tag
-  comment <- TL.comment tag
-  track <- TL.track tag
-  year <- TL.year tag
-  update database (AddTrack file artist album title genre comment track year)
-  TL.close $ fromJust tagFile
+  taglib $ do
+    tag <- TL.openFile file
+    artist <- getArtist tag
+    album <- getAlbum tag
+    title <- getTitle tag
+    genre <- getGenre tag
+    comment <- getComment tag
+    track <- TL.getTrack tag
+    year <- getYear tag
+    io $ update database (AddTrack file artist album title genre comment track year)
+    return ()
+    
+  --tagFile <- TL.open file
+  --mTag <- TL.tag $ fromJust tagFile
+  --let tag = fromJust mTag
+  --artist <- TL.artist tag
+  --album <- TL.album tag
+  --title <- TL.title tag
+  --genre <- TL.genre tag
+  --comment <- TL.comment tag
+  --track <- TL.track tag
+  --year <- TL.year tag
+  --update database (AddTrack file artist album title genre comment track year)
+  --TL.close $ fromJust tagFile
