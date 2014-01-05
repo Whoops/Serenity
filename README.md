@@ -14,4 +14,4 @@ By default Serentiy will use `~/.Serenity` as it's data directory.  This can be 
 `Serenity --setup` or `-s` Creates the database and the static html/js/css files in it's data directory
 `Serenity --import <dir>` or `-i <dir>` Imports all MP3s found in the directory into the database.
 
-When run without any agruments, Serentiy will start it's webserver accessible at [http://localhost:3000]
+When run without any agruments, Serentiy will start it's webserver accessible at [http://localhost:3000](http://localhost:3000)
