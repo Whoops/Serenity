@@ -111,6 +111,6 @@ runServer workDir = do
       mTrack <- liftIO $ query database (GetTrack $ TrackId trackId)
       case mTrack of
         Just track -> do
-          header "Content-Type" "audio/mpeg"
+          setHeader "Content-Type" "audio/mpeg"
           Web.Scotty.file $ DB.file track
         Nothing -> next
